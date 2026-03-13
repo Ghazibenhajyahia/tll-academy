@@ -3,11 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import { SESSIONS } from "@/lib/questions";
+import { fetchSessions } from "@/lib/sessions";
 import { useAuth } from "@/lib/auth-context";
 import TopBar from "@/components/TopBar";
 import ProgressBar from "@/components/ProgressBar";
 import QuestionCard from "@/components/QuestionCard";
+import type { Session } from "@/types";
 
 export default function QuizClient() {
   const params = useParams();
@@ -15,22 +16,31 @@ export default function QuizClient() {
   const supabase = createClient();
   const { user, loading } = useAuth();
   const sessionIndex = Number(params.sessionId);
-  const session = SESSIONS[sessionIndex];
 
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
+      return;
     }
+    fetchSessions().then((s) => {
+      setSessions(s);
+      setSessionsLoaded(true);
+    });
   }, [loading, user, router]);
+
+  const session = sessions[sessionIndex];
 
   const handleAnswer = useCallback((correct: boolean) => {
     if (correct) setCorrectCount((c) => c + 1);
   }, []);
 
   const handleNext = useCallback(async () => {
+    if (!session) return;
     if (currentQ + 1 < session.questions.length) {
       setCurrentQ((q) => q + 1);
     } else {
@@ -42,11 +52,12 @@ export default function QuizClient() {
           .from("session_results")
           .select("*", { count: "exact", head: true })
           .eq("user_id", user.id)
-          .eq("session_index", sessionIndex);
+          .eq("session_id", session.dbId);
 
         await supabase.from("session_results").insert({
           user_id: user.id,
           session_index: sessionIndex,
+          session_id: session.dbId,
           score: correctCount,
           total: session.questions.length,
           attempt: (count || 0) + 1,
@@ -57,15 +68,17 @@ export default function QuizClient() {
           .select("*")
           .eq("user_id", user.id);
 
-        if (results) {
-          const bestScores = [false, false, false, false];
+        if (results && sessions.length > 0) {
+          // Check certification: all sessions passed (by session DB id)
+          const sessionDbIds = sessions.map((s) => s.dbId);
+          const passedIds = new Set<number>();
           for (const r of results) {
-            if (r.score / r.total >= 0.8) bestScores[r.session_index] = true;
+            if (r.score / r.total >= 0.8) passedIds.add(r.session_id);
           }
           if (correctCount / session.questions.length >= 0.8) {
-            bestScores[sessionIndex] = true;
+            passedIds.add(session.dbId);
           }
-          if (bestScores.every(Boolean)) {
+          if (sessionDbIds.every((id) => passedIds.has(id))) {
             await supabase
               .from("profiles")
               .update({ certified: true, certified_at: new Date().toISOString() })
@@ -76,19 +89,19 @@ export default function QuizClient() {
 
       router.push(`/results/${sessionIndex}?score=${correctCount}&total=${session.questions.length}`);
     }
-  }, [currentQ, correctCount, session, sessionIndex, supabase, router]);
+  }, [currentQ, correctCount, session, sessions, sessionIndex, supabase, router]);
 
-  if (!session) {
-    router.push("/dashboard");
-    return null;
-  }
-
-  if (loading) {
+  if (!sessionsLoaded || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen relative z-[1]">
         <div className="text-grey text-sm tracking-[2px]">Chargement...</div>
       </div>
     );
+  }
+
+  if (!session) {
+    router.push("/dashboard");
+    return null;
   }
 
   return (

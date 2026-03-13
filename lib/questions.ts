@@ -3,6 +3,7 @@ import { Session } from "@/types";
 export const SESSIONS: Session[] = [
   {
     id: 0,
+    dbId: 1,
     label: "Session 1 · Chapitres 1–8",
     title: "Opérations Fondamentales",
     chapters: "Ch.01 Philosophie · Ch.02 Structure · Ch.03 Rôles · Ch.04 Check-in · Ch.05 Check-out · Ch.06 Ménage · Ch.07 Annonce · Ch.08 Visibilité",
@@ -23,6 +24,7 @@ export const SESSIONS: Session[] = [
   },
   {
     id: 1,
+    dbId: 2,
     label: "Session 2 · Chapitres 9–15",
     title: "Relation Client & Outils",
     chapters: "Ch.09 Convaincre · Ch.10 Fidéliser · Ch.11 Avis · Ch.12 TLL Manager · Ch.13 Checklists · Ch.14 FAQ Crise · Ch.15 Ressources",
@@ -43,6 +45,7 @@ export const SESSIONS: Session[] = [
   },
   {
     id: 2,
+    dbId: 3,
     label: "Session 3 · Chapitres 16–22",
     title: "Finance & Équipe",
     chapters: "Ch.16 ROI · Ch.17 Fiscal · Ch.18 Onboarding · Ch.19 Flux Financier · Ch.20 Booking · Ch.21 Saisonnalité · Ch.22 Équipe",
@@ -63,6 +66,7 @@ export const SESSIONS: Session[] = [
   },
   {
     id: 3,
+    dbId: 4,
     label: "Session 4 · Chapitres 23–29",
     title: "Terrain, Finance & Droit",
     chapters: "Ch.23 Fiscalité · Ch.24 Paiement · Ch.25 Dégâts · Ch.26 Cautions · Ch.27 Assurances · Ch.28 Incidents · Ch.29 Propriétaires difficiles",

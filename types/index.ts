@@ -13,6 +13,7 @@ export interface SessionResult {
   id: string;
   user_id: string;
   session_index: number;
+  session_id: number;
   score: number;
   total: number;
   passed: boolean;
@@ -30,6 +31,7 @@ export interface Question {
 
 export interface Session {
   id: number;
+  dbId: number;
   label: string;
   title: string;
   chapters: string;

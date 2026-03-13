@@ -4,17 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { SESSIONS } from "@/lib/questions";
+import { fetchSessions } from "@/lib/sessions";
 import TopBar from "@/components/TopBar";
 import SessionCard from "@/components/SessionCard";
-import type { SessionScore } from "@/types";
+import type { Session, SessionScore } from "@/types";
 
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
   const { user, profile, loading: authLoading } = useAuth();
-  const [scores, setScores] = useState<(SessionScore | null)[]>([null, null, null, null]);
-  const [scoresLoaded, setScoresLoaded] = useState(false);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [scores, setScores] = useState<(SessionScore | null)[]>([]);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -22,10 +23,13 @@ export default function DashboardPage() {
       router.push("/login");
       return;
     }
-    loadScores();
+    init();
   }, [authLoading, user]);
 
-  const loadScores = async () => {
+  const init = async () => {
+    const [sessionsData] = await Promise.all([fetchSessions()]);
+    setSessions(sessionsData);
+
     if (!user) return;
     const { data: results } = await supabase
       .from("session_results")
@@ -34,35 +38,44 @@ export default function DashboardPage() {
       .order("completed_at", { ascending: false });
 
     if (results) {
-      const bestScores: (SessionScore | null)[] = [null, null, null, null];
+      // Map results by session DB id, then align to position
+      const bestScores: (SessionScore | null)[] = new Array(sessionsData.length).fill(null);
+      const byDbId = new Map<number, { score: number; total: number }>();
       for (const r of results) {
-        const idx = r.session_index;
-        if (
-          !bestScores[idx] ||
-          r.score / r.total > bestScores[idx]!.score / bestScores[idx]!.total
-        ) {
-          bestScores[idx] = {
-            score: r.score,
-            total: r.total,
-            passed: r.score / r.total >= 0.8,
-          };
+        const dbId = r.session_id ?? null;
+        if (dbId === null) continue;
+        const existing = byDbId.get(dbId);
+        if (!existing || r.score / r.total > existing.score / existing.total) {
+          byDbId.set(dbId, { score: r.score, total: r.total });
+        }
+      }
+      for (let i = 0; i < sessionsData.length; i++) {
+        const best = byDbId.get(sessionsData[i].dbId);
+        if (best) {
+          bestScores[i] = { ...best, passed: best.score / best.total >= 0.8 };
         }
       }
       setScores(bestScores);
     }
-    setScoresLoaded(true);
+    setReady(true);
   };
 
-  const allPassed = scores.every((s) => s?.passed);
+  const allPassed = sessions.length > 0 && scores.every((s) => s?.passed);
   const firstAvailable = scores.findIndex((s) => !s || !s.passed);
   const nextSession = firstAvailable >= 0 ? firstAvailable : 0;
 
   const isUnlocked = (idx: number) => {
+    // Already passed sessions are always accessible (even after reorder)
+    if (scores[idx]?.passed) return true;
     if (idx === 0) return true;
-    return scores[idx - 1]?.passed === true;
+    // For unpassed sessions, all previous must be passed
+    for (let i = 0; i < idx; i++) {
+      if (!scores[i]?.passed) return false;
+    }
+    return true;
   };
 
-  if (authLoading || !scoresLoaded) {
+  if (authLoading || !ready) {
     return (
       <div className="flex items-center justify-center min-h-screen relative z-[1]">
         <div className="text-grey text-sm tracking-[2px]">Chargement...</div>
@@ -92,12 +105,12 @@ export default function DashboardPage() {
           valider chaque session et accéder à la suivante.
         </p>
         <div className="animate-fadeUp animate-fadeUp-5 grid grid-cols-1 sm:grid-cols-2 gap-0.5 max-w-[780px] w-full mb-14">
-          {SESSIONS.map((session, i) => (
+          {sessions.map((session, i) => (
             <SessionCard
               key={session.id}
               session={session}
               index={i}
-              score={scores[i]}
+              score={scores[i] || null}
               locked={!isUnlocked(i)}
               onClick={() => router.push(`/quiz/${i}`)}
             />

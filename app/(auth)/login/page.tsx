@@ -44,6 +44,7 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen px-5 py-20 relative z-[1]">
       <div className="login-box">
+        <img src="/logo-blanc.png" alt="The Landlord" className="h-12 mx-auto mb-6" />
         <div className="text-[9px] tracking-[6px] text-gold uppercase mb-8">
           The Landlord · Academy
         </div>

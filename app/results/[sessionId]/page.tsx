@@ -2,12 +2,7 @@ import { Suspense } from "react";
 import ResultsClient from "./ResultsClient";
 
 export function generateStaticParams() {
-  return [
-    { sessionId: "0" },
-    { sessionId: "1" },
-    { sessionId: "2" },
-    { sessionId: "3" },
-  ];
+  return Array.from({ length: 10 }, (_, i) => ({ sessionId: String(i) }));
 }
 
 export default function ResultsPage() {

@@ -22,10 +22,17 @@ export default function TopBar({ title }: TopBarProps) {
   return (
     <div className="topbar">
       <div
-        className="font-serif font-light text-[11px] tracking-[6px] text-gold uppercase cursor-pointer"
+        className="flex items-center gap-3 cursor-pointer"
         onClick={() => router.push("/dashboard")}
       >
-        The Landlord
+        <img
+          src="/logo-blanc.png"
+          alt="The Landlord Academy"
+          className="h-14 w-auto block flex-shrink-0"
+        />
+        <span className="font-serif font-light text-[11px] tracking-[6px] text-gold uppercase">
+          The Landlord
+        </span>
       </div>
       <div className="flex items-center gap-3">
         <div className="text-[10px] tracking-[3px] text-grey uppercase hidden sm:block">

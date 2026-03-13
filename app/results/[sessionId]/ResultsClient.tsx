@@ -1,21 +1,42 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { SESSIONS } from "@/lib/questions";
+import { fetchSessions } from "@/lib/sessions";
 import TopBar from "@/components/TopBar";
 import ResultRing from "@/components/ResultRing";
+import type { Session } from "@/types";
 
 export default function ResultsClient() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionIndex = Number(params.sessionId);
-  const session = SESSIONS[sessionIndex];
 
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
+
+  useEffect(() => {
+    fetchSessions().then((s) => {
+      setSessions(s);
+      setSessionsLoaded(true);
+    });
+  }, []);
+
+  const session = sessions[sessionIndex];
   const score = Number(searchParams.get("score") || 0);
   const total = Number(searchParams.get("total") || session?.questions.length || 12);
   const pct = Math.round((score / total) * 100);
   const passed = pct >= 80;
+  const isLastSession = sessionIndex === sessions.length - 1;
+
+  if (!sessionsLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-screen relative z-[1]">
+        <div className="text-grey text-sm tracking-[2px]">Chargement...</div>
+      </div>
+    );
+  }
 
   if (!session) {
     router.push("/dashboard");
@@ -73,7 +94,7 @@ export default function ResultsClient() {
           >
             ↩ Recommencer
           </button>
-          {passed && sessionIndex < 3 && (
+          {passed && !isLastSession && (
             <button
               className="btn-gold"
               onClick={() => router.push(`/quiz/${sessionIndex + 1}`)}
@@ -81,7 +102,7 @@ export default function ResultsClient() {
               Session suivante →
             </button>
           )}
-          {passed && sessionIndex === 3 && (
+          {passed && isLastSession && (
             <button
               className="btn-gold"
               onClick={() => router.push("/certificate")}

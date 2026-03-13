@@ -569,6 +569,78 @@ body::before {
   padding: 24px 20px;
 }
 
+/* ── Admin Inputs ── */
+.admin-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(201, 169, 110, 0.2);
+  padding: 10px 14px;
+  color: var(--cream);
+  font-family: "Jost", sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: vertical;
+}
+
+.admin-input:focus {
+  border-color: rgba(201, 169, 110, 0.5);
+}
+
+.admin-input::placeholder {
+  color: var(--grey);
+}
+
+/* ── Small Admin Buttons ── */
+.btn-sm {
+  font-family: "Jost", sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.btn-sm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-sm-gold {
+  background: var(--gold);
+  color: var(--green-dark);
+  border-color: var(--gold);
+}
+
+.btn-sm-gold:hover:not(:disabled) {
+  background: var(--gold-light);
+}
+
+.btn-sm-ghost {
+  background: transparent;
+  color: var(--grey);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-sm-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--cream);
+}
+
+.btn-sm-danger {
+  background: transparent;
+  color: var(--wrong);
+  border-color: rgba(192, 57, 43, 0.3);
+}
+
+.btn-sm-danger:hover {
+  background: rgba(192, 57, 43, 0.1);
+  border-color: rgba(192, 57, 43, 0.5);
+}
+
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .topbar {
